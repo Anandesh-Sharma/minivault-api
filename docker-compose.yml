@@ -10,12 +10,6 @@ services:
     environment:
       - OLLAMA_ORIGINS=*
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
 
   # MiniVault API service
   api:
@@ -25,19 +19,16 @@ services:
       - "8000:8000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_MODEL=llama3.2:1b
+      - OLLAMA_MODEL=tinyllama:latest
     volumes:
       - ./logs:/app/logs
-    depends_on:
-      ollama:
-        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 30s
 
 volumes:
   ollama_data:

@@ -55,24 +55,25 @@ app.add_middleware(
 
 # Ollama configuration
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "tinyllama:latest")
 
 class OllamaClient:
     """Ollama client for generating responses"""
     
     def __init__(self):
         # Configure ollama client to use our host
-        self.client = ollama.Client(host=OLLAMA_HOST)
+        self.client = ollama.AsyncClient(host=OLLAMA_HOST)
     
     async def generate_response(self, prompt: str) -> str:
         """Generate a response using Ollama"""
         try:
-            response = self.client.generate(
+            message = {'role': 'user', 'content': prompt}
+            response = await self.client.chat(
                 model=OLLAMA_MODEL,
-                prompt=prompt,
+                messages=[message],
                 stream=False
             )
-            return response['response']
+            return response.message['content']
         except Exception as e:
             # Fallback response if Ollama is unavailable
             return f"I understand your request about '{prompt[:50]}...'. However, I'm currently unable to connect to the language model service. Please ensure the Ollama service is running and try again."
@@ -80,17 +81,9 @@ class OllamaClient:
     async def generate_stream(self, prompt: str) -> AsyncGenerator[str, None]:
         """Generate a streaming response using Ollama"""
         try:
-            response = self.client.generate(
-                model=OLLAMA_MODEL,
-                prompt=prompt,
-                stream=True
-            )
-            
-            for chunk in response:
-                if 'response' in chunk and chunk['response']:
-                    yield chunk['response']
-                    # Minimal delay to ensure proper streaming without blocking
-                    await asyncio.sleep(0.001)
+            message = {'role': 'user', 'content': prompt}
+            async for chunk in await self.client.chat(model=OLLAMA_MODEL, messages=[message],stream=True):
+                yield chunk.message['content']
                     
         except Exception as e:
             # Fallback streaming response
@@ -178,11 +171,11 @@ async def generate_response(request: GenerateRequest):
     try:
         if request.stream:
             # Return streaming response
-            async def generate():
+            async def generate() -> AsyncGenerator[str, None]:
                 full_response = ""
                 async for chunk in ollama_client.generate_stream(request.prompt):
                     full_response += chunk
-                    yield chunk
+                    yield f"data: {chunk}\n\n"
                 
                 # Log the complete interaction
                 response_time_ms = int((time.time() - start_time) * 1000)
@@ -190,12 +183,7 @@ async def generate_response(request: GenerateRequest):
             
             return StreamingResponse(
                 generate(),
-                media_type="text/plain",
-                headers={
-                    "Cache-Control": "no-cache", 
-                    "Connection": "keep-alive",
-                    "X-Accel-Buffering": "no"  # Disable nginx buffering if present
-                }
+                media_type="text/event-stream"
             )
         else:
             # Regular response

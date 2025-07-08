@@ -64,43 +64,6 @@ curl http://localhost:8000/health
 }
 ```
 
-## 🔧 Integration Examples
-
-### JavaScript/Node.js
-```javascript
-const response = await fetch('http://localhost:8000/generate', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    prompt: 'Explain AI in simple terms',
-    stream: false
-  })
-});
-
-const data = await response.json();
-console.log(data.response);
-```
-
-### Python
-```python
-import requests
-
-response = requests.post('http://localhost:8000/generate', 
-  json={
-    'prompt': 'Write a product description',
-    'stream': False
-  }
-)
-
-print(response.json()['response'])
-```
-
-### cURL
-```bash
-curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Your prompt here"}'
-```
 
 ## 📍 Available Endpoints
 
@@ -120,13 +83,6 @@ docker ps
 # Restart everything
 docker-compose down
 ./setup.sh
-```
-
-### Need Different Model?
-Edit `docker-compose.yml` and change:
-```yaml
-environment:
-  - OLLAMA_MODEL=llama3.2:1b  # Change this to your preferred model
 ```
 
 ### View Logs
@@ -155,7 +111,7 @@ docker logs minivault-ollama
 
 ## ⚡ Performance
 
-- **Model**: Llama 3.2 1B (lightweight, fast)
+- **Model**: tinyllama:latest (lightweight, fast)
 - **Response Time**: ~1-3 seconds typical
 - **Memory Usage**: ~2-4GB RAM
 - **Streaming**: Real-time token-by-token output
