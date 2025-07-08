@@ -1,22 +1,25 @@
 # MiniVault API
 
-A lightweight local REST API simulating core ModelVault functionality. The API receives prompts and returns generated responses with comprehensive logging, designed as a production-ready prototype for machine learning model management.
+A lightweight REST API with Ollama integration for language model interaction, featuring streaming responses and comprehensive logging.
 
 ## 🚀 Features
 
-- **RESTful API**: Clean `/generate` endpoint for prompt processing
-- **Intelligent Response Generation**: Context-aware stubbed responses with variability
-- **Comprehensive Logging**: All interactions logged to JSONL format with metadata
-- **Input Validation**: Robust validation and error handling
+- **Ollama Integration**: Real language model responses using Ollama
+- **Streaming Support**: Token-by-token streaming responses
+- **Docker Ready**: Complete containerization with docker-compose
+- **CPU-Only**: Optimized for CPU-only Ollama deployment
+- **Comprehensive Logging**: All interactions logged in JSONL format
 - **Health Monitoring**: Built-in health checks and statistics
-- **CORS Support**: Ready for web frontend integration
-- **Production Ready**: Clean code structure with proper error handling
+- **Easy Deployment**: One-command setup and deployment
 
 ## 📋 Project Structure
 
 ```
 minivault-api/
-├── app.py                 # Main FastAPI application
+├── app.py                 # Main FastAPI application with Ollama
+├── Dockerfile             # API container configuration
+├── docker-compose.yml     # Multi-service orchestration
+├── setup.sh               # Automated setup script
 ├── test_client.py         # Comprehensive test client
 ├── requirements.txt       # Python dependencies
 ├── logs/                  # Auto-created logs directory
@@ -24,415 +27,277 @@ minivault-api/
 └── README.md             # This file
 ```
 
-## 🔧 Setup Instructions
+## 🔧 Quick Start
 
 ### Prerequisites
-- Python 3.8 or higher
-- pip (Python package installer)
+- Docker and Docker Compose
+- At least 4GB RAM available
+- Internet connection for model download
 
-### Installation Options
-
-#### 🚀 Quick Start (Basic Version)
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Anandesh-Sharma/minivault-api.git
-   cd minivault-api
-   ```
-
-2. **Run the basic version**
-   ```bash
-   # One-command setup and start
-   ./start_server.sh
-   ```
-
-The basic API will be available at `http://localhost:8001`
-
-#### 🌟 Advanced Version (Bonus Features)
-
-For the advanced version with streaming responses and local LLM integration:
+### 🚀 One-Command Setup
 
 ```bash
-# One-command setup and start with configuration options
-./start_advanced.sh
+# Clone the repository
+git clone https://github.com/Anandesh-Sharma/minivault-api.git
+cd minivault-api
+
+# Run the automated setup
+./setup.sh
 ```
 
-Choose between:
-- **Stubbed responses** (fast, lightweight)
-- **Local LLM** (DistilGPT-2, requires ~250MB download)
+This will:
+1. Start Ollama container
+2. Build and start the API container  
+3. Pull the Llama 3.2 1B model
+4. Verify everything is working
 
-The advanced API will be available at `http://localhost:8002`
-
-#### 🛠️ Manual Installation
-
-```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start basic version
-python app.py
-
-# OR start advanced version
-python app_advanced.py
-```
-
-## 🌟 Advanced Features (Bonus Tasks)
-
-The advanced version (`app_advanced.py`) includes all bonus implementations:
-
-### 🌊 Streaming Responses
-Token-by-token streaming output for real-time generation:
+### Manual Setup
 
 ```bash
-curl -X POST http://localhost:8002/generate \
+# Start services
+docker-compose up -d
+
+# Wait for Ollama to be ready, then pull model
+curl -X POST http://localhost:11434/api/pull \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Tell me a story", "stream": true}'
+  -d '{"name": "llama3.2:1b"}'
 ```
 
-### 🧠 Local LLM Integration
-Real Hugging Face Transformers integration:
+## 🎯 API Endpoints
 
-- **DistilGPT-2**: 82M parameters, fast inference
-- **GPT-2**: 117M parameters, better quality
-- **Configurable models** via environment variables
+### 📍 Service URLs
+- **API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Ollama**: http://localhost:11434
 
-```python
-# Configure in config.env
-MODEL_TYPE=transformers
-HF_MODEL_NAME=distilgpt2
-```
-
-### 📊 Enhanced Logging & Performance Metrics
-Advanced logging with system monitoring:
-
-```json
-{
-  "timestamp": "2025-01-20T10:30:45.123Z",
-  "prompt": "user input",
-  "response": "generated response",
-  "response_time_ms": 150,
-  "tokens_generated": 25,
-  "memory_usage_mb": 45.2,
-  "cpu_percent": 15.3,
-  "stream": false
-}
-```
-
-### 🔍 Advanced Endpoints
-
-#### `GET /models/info`
-Get detailed model information:
-```json
-{
-  "model_type": "transformers",
-  "model_name": "distilgpt2",
-  "status": "loaded",
-  "capabilities": ["text_generation", "streaming"]
-}
-```
-
-#### `POST /models/reload`
-Reload models for development:
-```json
-{
-  "status": "reloaded",
-  "model_type": "transformers"
-}
-```
-
-#### `GET /logs/stats` (Enhanced)
-Comprehensive performance analytics:
-```json
-{
-  "total_requests": 150,
-  "avg_response_time_ms": 125.5,
-  "performance_metrics": {
-    "min_response_time_ms": 45,
-    "max_response_time_ms": 890,
-    "streaming_requests": 23,
-    "total_tokens_generated": 15420
-  }
-}
-```
-
-## 🎯 Usage Examples
-
-### Basic API (Port 8001)
-
-```bash
-# Health check
-curl http://localhost:8001/health
-
-# Generate response
-curl -X POST http://localhost:8001/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "What is machine learning?"}'
-
-# Get log statistics
-curl http://localhost:8001/logs/stats
-```
-
-### Advanced API (Port 8002)
-
-```bash
-# Health check with system info
-curl http://localhost:8002/health
-
-# Generate response with advanced parameters
-curl -X POST http://localhost:8002/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Explain AI", "max_tokens": 50, "temperature": 0.8}'
-
-# Streaming response
-curl -X POST http://localhost:8002/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Tell me a story", "stream": true}'
-
-# Get model information
-curl http://localhost:8002/models/info
-
-# Enhanced log statistics
-curl http://localhost:8002/logs/stats
-```
-
-### Using the Test Clients
-
-Basic version tests:
-```bash
-python test_client.py
-```
-
-Advanced version tests:
-```bash
-python test_client_advanced.py
-```
-
-Interactive testing mode:
-```bash
-python test_client.py --interactive
-python test_client_advanced.py interactive
-```
-
-### Python requests example
-
-```python
-import requests
-
-# Generate response
-response = requests.post(
-    "http://localhost:8001/generate",
-    json={"prompt": "Write a Python function to calculate fibonacci"}
-)
-
-print(response.json())
-```
-
-## 📚 API Documentation
-
-### Endpoints
+### 🔥 Main Endpoints
 
 #### `POST /generate`
-Generate a response to a given prompt.
+Generate responses using Ollama:
 
-**Request:**
+**Regular Response:**
+```bash
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain machine learning"}'
+```
+
+**Streaming Response:**
+```bash
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Tell me a story", "stream": true}'
+```
+
+**Request Format:**
 ```json
 {
-  "prompt": "Your prompt text here"
+  "prompt": "Your question or prompt here",
+  "stream": false  // Optional: true for streaming
 }
 ```
 
-**Response:**
+**Response Format:**
 ```json
 {
   "response": "Generated response text",
-  "model": "minivault-stubbed",
-  "response_time_ms": 150
+  "model": "minivault-ollama", 
+  "response_time_ms": 1250
 }
 ```
 
-**Status Codes:**
-- `200 OK`: Success
-- `400 Bad Request`: Invalid prompt (empty, too long)
-- `500 Internal Server Error`: Server error
-
 #### `GET /health`
-Health check endpoint.
+Check API and Ollama status:
+```bash
+curl http://localhost:8000/health
+```
 
 **Response:**
 ```json
 {
   "status": "healthy",
   "timestamp": "2025-01-20T10:30:45.123Z",
-  "logs_directory": true,
-  "api_version": "1.0.0"
+  "api_version": "2.0.0",
+  "ollama_host": "http://ollama:11434",
+  "ollama_model": "llama3.2:1b",
+  "ollama_status": "connected"
 }
 ```
 
 #### `GET /logs/stats`
-Get statistics about logged interactions.
+View interaction statistics:
+```bash
+curl http://localhost:8000/logs/stats
+```
 
 **Response:**
 ```json
 {
   "total_interactions": 42,
-  "avg_response_time_ms": 125.5,
-  "avg_prompt_length": 85.2,
-  "recent_interactions": 10
+  "avg_response_time_ms": 1250.5,
+  "recent_interactions": 10,
+  "streaming_requests": 15,
+  "regular_requests": 27,
+  "ollama_model": "llama3.2:1b"
 }
 ```
 
-#### `GET /`
-Root endpoint with API information.
+## 🧪 Testing
 
-### Interactive API Documentation
+### Automated Tests
+```bash
+# Run comprehensive test suite
+python test_client.py
 
-When the server is running, visit:
-- **Swagger UI**: `http://localhost:8001/docs`
-- **ReDoc**: `http://localhost:8001/redoc`
+# Interactive testing mode
+python test_client.py --interactive
+```
 
-## 🔍 Implementation Notes
+### Quick Manual Tests
+```bash
+# Test regular generation
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Hello, how are you?"}'
 
-### Response Generation Strategy
+# Test streaming
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Count from 1 to 5", "stream": true}'
 
-The API uses an intelligent stubbing system that:
+# Check health
+curl http://localhost:8000/health
 
-1. **Categorizes prompts** based on keywords:
-   - **Code**: Python, function, algorithm, etc.
-   - **Questions**: What, how, why, etc.
-   - **Explanations**: Explain, describe, etc.
-   - **Creative**: Create, design, story, etc.
-   - **Default**: General responses
+# View statistics  
+curl http://localhost:8000/logs/stats
+```
 
-2. **Selects appropriate templates** for each category
-3. **Adds contextual suffixes** based on prompt characteristics
-4. **Provides consistent, varied responses**
+## 🐳 Docker Configuration
 
-### Logging System
+### Environment Variables
+- `OLLAMA_HOST`: Ollama service URL (default: http://ollama:11434)
+- `OLLAMA_MODEL`: Model to use (default: llama3.2:1b)
 
-All interactions are logged to `logs/log.jsonl` with:
+### Containers
+- **ollama**: Runs Ollama service with CPU-only configuration
+- **api**: Runs the FastAPI application
+
+### Volumes
+- **ollama_data**: Persistent storage for Ollama models
+- **./logs**: Local logs directory mounted to container
+
+## 📊 Logging
+
+All interactions are logged to `logs/log.jsonl`:
 
 ```json
 {
   "timestamp": "2025-01-20T10:30:45.123Z",
   "prompt": "user input here",
-  "response": "generated response here",
-  "response_time_ms": 150,
-  "model": "minivault-stubbed",
+  "response": "ollama generated response",
+  "response_time_ms": 1250,
+  "model": "minivault-ollama",
+  "stream": false,
   "prompt_length": 42,
   "response_length": 235
 }
 ```
 
-### Error Handling
+## 🔧 Development
 
-- **Input validation** with Pydantic models
-- **Graceful error responses** with proper HTTP status codes
-- **Comprehensive logging** including errors
-- **Fallback mechanisms** for file I/O issues
-
-## 🧪 Testing
-
-### Automated Testing
-
-The test client provides comprehensive testing:
-
+### Local Development
 ```bash
-# Run all tests
-python test_client.py
+# Install dependencies
+pip install -r requirements.txt
 
-# Expected output:
-# 🚀 Starting MiniVault API Comprehensive Tests
-# ✅ Health check passed: healthy
-# ✅ Response generated successfully...
-# 🎯 Test Results: 15/15 tests passed
-# 🎉 All tests passed! API is working correctly.
+# Set environment variables
+export OLLAMA_HOST=http://localhost:11434
+export OLLAMA_MODEL=llama3.2:1b
+
+# Run API locally
+python app.py
 ```
 
-### Manual Testing Scenarios
+### Container Logs
+```bash
+# View API logs
+docker-compose logs api
 
-1. **Valid prompts**: Various categories and lengths
-2. **Invalid prompts**: Empty, whitespace-only, too long
-3. **Edge cases**: Special characters, JSON-like input, multiline
-4. **Error handling**: Malformed requests, server errors
-5. **Performance**: Response time measurement
+# View Ollama logs  
+docker-compose logs ollama
 
-## 🚀 Future Improvements
+# Follow logs in real-time
+docker-compose logs -f
+```
 
-### Immediate Enhancements
-1. **Streaming Responses**: Token-by-token output for better UX
-2. **Local LLM Integration**: Hugging Face Transformers or Ollama
-3. **Authentication**: API key-based access control
-4. **Rate Limiting**: Prevent API abuse
-5. **Enhanced Logging**: Request IDs, user tracking, detailed metrics
+### Stopping Services
+```bash
+# Stop all services
+docker-compose down
 
-### Advanced Features
-1. **Model Management**: Multiple model backends
-2. **Prompt Templates**: Pre-defined prompt patterns
-3. **Response Caching**: Cache common responses
-4. **Async Processing**: Background job processing
-5. **Database Integration**: Persistent storage for logs and responses
+# Stop and remove volumes
+docker-compose down -v
+```
 
-## 🛠️ Development
-
-### Code Quality
-- **Type hints** throughout codebase
-- **Comprehensive error handling**
-- **Modular design** with clear separation of concerns
-- **Production-ready** logging and monitoring
-
-### Architecture Decisions
-- **FastAPI**: Modern, fast, with automatic API documentation
-- **Pydantic**: Data validation and serialization
-- **JSONL logging**: Efficient, streamable log format
-- **Stubbed responses**: Intelligent, categorized responses
-
-## 🔧 Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Common Issues
 
 1. **Port already in use**
    ```bash
-   # Change port in app.py or kill existing process
-   lsof -ti:8001 | xargs kill -9
+   # Kill processes using ports 8000 or 11434
+   lsof -ti:8000,11434 | xargs kill -9
    ```
 
-2. **Module not found errors**
+2. **Ollama model not loaded**
    ```bash
-   # Ensure virtual environment is activated and dependencies installed
-   pip install -r requirements.txt
+   # Manually pull the model
+   curl -X POST http://localhost:11434/api/pull \
+     -H "Content-Type: application/json" \
+     -d '{"name": "llama3.2:1b"}'
    ```
 
-3. **Permission errors with logs**
+3. **Container health check failing**
    ```bash
-   # Ensure write permissions for logs directory
-   chmod 755 logs/
+   # Check container status
+   docker-compose ps
+   
+   # View container logs
+   docker-compose logs ollama
+   docker-compose logs api
    ```
 
-## 📄 License
+4. **Low memory issues**
+   ```bash
+   # Use smaller model
+   export OLLAMA_MODEL=llama3.2:1b  # Already smallest
+   
+   # Or increase Docker memory allocation
+   ```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 🎯 Model Information
+
+**Default Model**: Llama 3.2 1B
+- **Size**: ~1.3GB download
+- **Parameters**: 1 billion
+- **CPU Compatible**: Optimized for CPU inference
+- **Use Case**: Lightweight, fast responses
+
+## 📈 Performance
+
+**Expected Performance** (CPU-only):
+- **Cold start**: 30-60 seconds (model loading)
+- **Regular responses**: 1-3 seconds
+- **Streaming responses**: Real-time token generation
+- **Memory usage**: ~2-3GB (including Ollama)
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make changes and test with Docker
+4. Submit a pull request
 
-## 📞 Support
+## 📝 License
 
-For questions or issues:
-1. Check the troubleshooting section above
-2. Review the test client output for debugging
-3. Check server logs for detailed error information
-4. Open an issue on GitHub with reproduction steps 
+This project is licensed under the MIT License. 

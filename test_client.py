@@ -13,7 +13,7 @@ import sys
 from typing import Dict, Any, List
 
 # API Configuration
-API_BASE_URL = "http://localhost:8001"
+API_BASE_URL = "http://localhost:8000"
 
 class MiniVaultTestClient:
     """Test client for MiniVault API"""
@@ -152,7 +152,43 @@ class MiniVaultTestClient:
                 success_count += 1
             print()
         
-        # Test 4: Log stats
+        # Test 4: Streaming response
+        print("🌊 Testing streaming endpoint...")
+        try:
+            response = self.session.post(
+                f"{self.base_url}/generate",
+                json={"prompt": "Count to 5", "stream": True},
+                stream=True,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                chunks_received = 0
+                for line in response.iter_lines():
+                    if line:
+                        line_text = line.decode('utf-8')
+                        if line_text.startswith('data: '):
+                            chunks_received += 1
+                            try:
+                                chunk_data = json.loads(line_text[6:])
+                                if chunk_data.get('is_final', False):
+                                    break
+                            except json.JSONDecodeError:
+                                continue
+                
+                if chunks_received > 0:
+                    print(f"✅ Streaming works: {chunks_received} chunks received")
+                    success_count += 1
+                else:
+                    print("❌ No streaming chunks received")
+            else:
+                print(f"❌ Streaming failed: {response.status_code}")
+        except Exception as e:
+            print(f"❌ Streaming error: {e}")
+        
+        print()
+
+        # Test 5: Log stats
         if self.test_log_stats():
             success_count += 1
         
