@@ -1,6 +1,6 @@
-# ModelVault
+# MiniVault API
 
-A repository for managing and organizing machine learning models.
+A repository for managing and organizing machine learning models through a RESTful API.
 
 ## Getting Started
 
@@ -8,10 +8,12 @@ This project is designed to help you store, version, and manage your machine lea
 
 ## Features
 
-- Model versioning
+- RESTful API for model management
+- Model versioning and storage
 - Model metadata tracking
 - Easy model deployment
 - Model performance monitoring
+- Secure model access control
 
 ## Installation
 
