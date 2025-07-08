@@ -55,6 +55,31 @@ wait_for_ollama
 MODEL=${OLLAMA_MODEL:-"llama3.2:1b"}
 pull_model "$MODEL"
 
+# Ensure API container is running after Ollama is ready
+echo "🔧 Starting API container..."
+docker-compose up -d api
+
+# Wait a moment and verify API is running
+sleep 3
+if docker ps --filter "name=minivault-api" --filter "status=running" | grep -q minivault-api; then
+    echo "✅ API container is running!"
+else
+    echo "⚠️  Starting API container manually..."
+    docker start minivault-api || docker-compose restart api
+fi
+
+# Final health check
+echo "🔍 Verifying services..."
+sleep 2
+
+# Check API health
+if curl -s http://localhost:8000/health > /dev/null; then
+    echo "✅ API is healthy and responding!"
+else
+    echo "⚠️  API might still be starting up. Check docker logs if needed:"
+    echo "   docker logs minivault-api"
+fi
+
 echo ""
 echo "🎉 Setup complete!"
 echo "======================================"
@@ -69,4 +94,8 @@ echo ""
 echo "For streaming:"
 echo "   curl -X POST http://localhost:8000/generate \\"
 echo "        -H 'Content-Type: application/json' \\"
-echo "        -d '{\"prompt\": \"Tell me a story\", \"stream\": true}'" 
+echo "        -d '{\"prompt\": \"Tell me a story\", \"stream\": true}'"
+echo ""
+echo "📋 Check container status: docker ps"
+echo "📄 View API logs: docker logs minivault-api"
+echo "📄 View Ollama logs: docker logs minivault-ollama" 

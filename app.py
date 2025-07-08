@@ -35,9 +35,7 @@ class ErrorResponse(BaseModel):
     error: str
     detail: str
 
-class StreamChunk(BaseModel):
-    token: str
-    is_final: bool = False
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -89,10 +87,10 @@ class OllamaClient:
             )
             
             for chunk in response:
-                if 'response' in chunk:
+                if 'response' in chunk and chunk['response']:
                     yield chunk['response']
-                    # Small delay to make streaming visible
-                    await asyncio.sleep(0.01)
+                    # Minimal delay to ensure proper streaming without blocking
+                    await asyncio.sleep(0.001)
                     
         except Exception as e:
             # Fallback streaming response
@@ -100,7 +98,7 @@ class OllamaClient:
             words = fallback_text.split()
             for word in words:
                 yield word + " "
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.05)
 
 class Logger:
     """Handles logging of all API interactions"""
@@ -184,12 +182,7 @@ async def generate_response(request: GenerateRequest):
                 full_response = ""
                 async for chunk in ollama_client.generate_stream(request.prompt):
                     full_response += chunk
-                    chunk_data = StreamChunk(token=chunk, is_final=False)
-                    yield f"data: {chunk_data.model_dump_json()}\n\n"
-                
-                # Send final chunk
-                final_chunk = StreamChunk(token="", is_final=True)
-                yield f"data: {final_chunk.model_dump_json()}\n\n"
+                    yield chunk
                 
                 # Log the complete interaction
                 response_time_ms = int((time.time() - start_time) * 1000)
@@ -198,7 +191,11 @@ async def generate_response(request: GenerateRequest):
             return StreamingResponse(
                 generate(),
                 media_type="text/plain",
-                headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
+                headers={
+                    "Cache-Control": "no-cache", 
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no"  # Disable nginx buffering if present
+                }
             )
         else:
             # Regular response
