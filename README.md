@@ -30,7 +30,9 @@ minivault-api/
 - Python 3.8 or higher
 - pip (Python package installer)
 
-### Installation
+### Installation Options
+
+#### 🚀 Quick Start (Basic Version)
 
 1. **Clone the repository**
    ```bash
@@ -38,33 +40,133 @@ minivault-api/
    cd minivault-api
    ```
 
-2. **Create and activate virtual environment** (recommended)
+2. **Run the basic version**
    ```bash
-   # Create virtual environment
-   python -m venv venv
-   
-   # Activate virtual environment
-   # On macOS/Linux:
-   source venv/bin/activate
-   # On Windows:
-   venv\Scripts\activate
+   # One-command setup and start
+   ./start_server.sh
    ```
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+The basic API will be available at `http://localhost:8001`
 
-4. **Start the API server**
-   ```bash
-   python app.py
-   ```
+#### 🌟 Advanced Version (Bonus Features)
 
-The API will be available at `http://localhost:8001`
+For the advanced version with streaming responses and local LLM integration:
+
+```bash
+# One-command setup and start with configuration options
+./start_advanced.sh
+```
+
+Choose between:
+- **Stubbed responses** (fast, lightweight)
+- **Local LLM** (DistilGPT-2, requires ~250MB download)
+
+The advanced API will be available at `http://localhost:8002`
+
+#### 🛠️ Manual Installation
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start basic version
+python app.py
+
+# OR start advanced version
+python app_advanced.py
+```
+
+## 🌟 Advanced Features (Bonus Tasks)
+
+The advanced version (`app_advanced.py`) includes all bonus implementations:
+
+### 🌊 Streaming Responses
+Token-by-token streaming output for real-time generation:
+
+```bash
+curl -X POST http://localhost:8002/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Tell me a story", "stream": true}'
+```
+
+### 🧠 Local LLM Integration
+Real Hugging Face Transformers integration:
+
+- **DistilGPT-2**: 82M parameters, fast inference
+- **GPT-2**: 117M parameters, better quality
+- **Configurable models** via environment variables
+
+```python
+# Configure in config.env
+MODEL_TYPE=transformers
+HF_MODEL_NAME=distilgpt2
+```
+
+### 📊 Enhanced Logging & Performance Metrics
+Advanced logging with system monitoring:
+
+```json
+{
+  "timestamp": "2025-01-20T10:30:45.123Z",
+  "prompt": "user input",
+  "response": "generated response",
+  "response_time_ms": 150,
+  "tokens_generated": 25,
+  "memory_usage_mb": 45.2,
+  "cpu_percent": 15.3,
+  "stream": false
+}
+```
+
+### 🔍 Advanced Endpoints
+
+#### `GET /models/info`
+Get detailed model information:
+```json
+{
+  "model_type": "transformers",
+  "model_name": "distilgpt2",
+  "status": "loaded",
+  "capabilities": ["text_generation", "streaming"]
+}
+```
+
+#### `POST /models/reload`
+Reload models for development:
+```json
+{
+  "status": "reloaded",
+  "model_type": "transformers"
+}
+```
+
+#### `GET /logs/stats` (Enhanced)
+Comprehensive performance analytics:
+```json
+{
+  "total_requests": 150,
+  "avg_response_time_ms": 125.5,
+  "performance_metrics": {
+    "min_response_time_ms": 45,
+    "max_response_time_ms": 890,
+    "streaming_requests": 23,
+    "total_tokens_generated": 15420
+  }
+}
+```
 
 ## 🎯 Usage Examples
 
-### Quick Test with curl
+### Basic API (Port 8001)
 
 ```bash
 # Health check
@@ -79,16 +181,45 @@ curl -X POST http://localhost:8001/generate \
 curl http://localhost:8001/logs/stats
 ```
 
-### Using the Test Client
+### Advanced API (Port 8002)
 
-Run comprehensive tests:
+```bash
+# Health check with system info
+curl http://localhost:8002/health
+
+# Generate response with advanced parameters
+curl -X POST http://localhost:8002/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain AI", "max_tokens": 50, "temperature": 0.8}'
+
+# Streaming response
+curl -X POST http://localhost:8002/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Tell me a story", "stream": true}'
+
+# Get model information
+curl http://localhost:8002/models/info
+
+# Enhanced log statistics
+curl http://localhost:8002/logs/stats
+```
+
+### Using the Test Clients
+
+Basic version tests:
 ```bash
 python test_client.py
+```
+
+Advanced version tests:
+```bash
+python test_client_advanced.py
 ```
 
 Interactive testing mode:
 ```bash
 python test_client.py --interactive
+python test_client_advanced.py interactive
 ```
 
 ### Python requests example
